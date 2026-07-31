@@ -255,9 +255,88 @@
   .about__org{ font-weight:600; margin-bottom:.5rem; }
   .about__contact{ font-style:normal; }
   .about__contact p{ margin-bottom:.4rem; }
+
+  /* ================================================================
+     PC用サイドナビ（2026-07-31・伎海案「左に固定メニュー」）
+     ページが1万px近くあり、スクロールで現在地を見失う。
+     左の余白に固定ナビを置いて、余白の解消と回遊性を同時に取る。
+     モバイルには一切出さない（既存のインラインnavがそのまま働く）。
+     ================================================================ */
+  .sidenav{ display:none; }
+
+  @media (min-width:1000px){
+    /* margin-right を入れないと1000〜1050px幅で本文が画面の右端に張り付く */
+    .page{ max-width:760px;
+           margin-left:max(300px, calc(50% - 380px));
+           margin-right:1.5rem; }
+    .photo{ max-width:520px; margin-left:auto; margin-right:auto; }
+
+    .sidenav{
+      display:block;
+      position:fixed;
+      top:50%; transform:translateY(-50%);
+      left:max(1.5rem, calc(50% - 380px - 260px));
+      width:220px;
+      font-size:.9rem;
+      line-height:1.7;
+      z-index:10;
+    }
+    .sidenav__title{
+      font-family:"游明朝","Yu Mincho",serif;
+      color:var(--color-navy);
+      font-size:.95rem;
+      margin:0 0 .8rem;
+      padding-bottom:.6rem;
+      border-bottom:1px solid var(--color-line);
+    }
+    .sidenav ul{ list-style:none; margin:0; padding:0; }
+    .sidenav li{ margin:0 0 .55rem; }
+    .sidenav a{
+      text-decoration:none;
+      color:var(--color-ink);
+      opacity:.7;
+      border-left:2px solid transparent;
+      padding-left:.7rem;
+      display:block;
+      transition:opacity .2s, border-color .2s;
+    }
+    .sidenav a:hover{ opacity:1; }
+    /* 現在地。IntersectionObserverが .is-current を付け替える */
+    .sidenav a.is-current{
+      opacity:1;
+      color:var(--color-navy);
+      border-left-color:var(--color-navy);
+      font-weight:600;
+    }
+    .sidenav__foot{
+      margin-top:1.2rem; padding-top:.8rem;
+      border-top:1px solid var(--color-line);
+      font-size:.8rem; opacity:.75;
+    }
+    /* 上部のインラインnavはサイドナビと重複するのでPCでは隠す */
+    .menu{ display:none; }
+  }
+
+  /* 画面が狭いとサイドナビが本文に被るため、その手前で通常表示へ戻す */
+  @media (max-width:999px){
+    .page{ margin-left:auto; margin-right:auto; }
+  }
 </style>
 </head>
 <body>
+<nav class="sidenav" aria-label="サイドメニュー">
+  <p class="sidenav__title">目次</p>
+  <ul>
+    <li><a href="#top">はじめに</a></li>
+    <li><a href="#story">津軽の手仕事</a></li>
+    <li><a href="#products">商品</a></li>
+    <li><a href="#order-made">オーダーメイド</a></li>
+    <li><a href="#buy">買い方</a></li>
+    <li><a href="#about">ハートスポットについて</a></li>
+  </ul>
+  <p class="sidenav__foot">017-773-4327<br>青森市浜田字豊田368</p>
+</nav>
+
 <div class="page">
 
 <header class="hero" id="top">
@@ -472,5 +551,29 @@
 </footer>
 
 </div>
+
+<script>
+// サイドナビの現在地ハイライト。外部ライブラリは使わない。
+(function(){
+  var links = document.querySelectorAll('.sidenav a');
+  if(!links.length) return;
+  var map = {};
+  links.forEach(function(a){
+    var t = document.querySelector(a.getAttribute('href'));
+    if(t) map[t.id] = a;
+  });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){ a.classList.remove('is-current'); });
+      if(map[e.target.id]) map[e.target.id].classList.add('is-current');
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) io.observe(el);
+  });
+})();
+</script>
 </body>
 </html>
